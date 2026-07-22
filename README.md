@@ -1,9 +1,9 @@
 # employee-service
 
-**Employee Management System** — a MySQL + JPA/Hibernate demo built on Spring Boot 3 / Java 21, covering every core relational-mapping style a relational-DB service needs: many-to-one, self-referencing one-to-many, owning many-to-many, embeddables, auditing and dynamic search.
+**Employee Management System** — a MySQL + JPA/Hibernate demo built on Spring Boot 4 / Java 25, covering every core relational-mapping style a relational-DB service needs: many-to-one, self-referencing one-to-many, owning many-to-many, embeddables, auditing and dynamic search.
 
-![Java](https://img.shields.io/badge/Java-21-orange)
-![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.3.4-brightgreen)
+![Java](https://img.shields.io/badge/Java-25-orange)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.6-brightgreen)
 ![MySQL](https://img.shields.io/badge/MySQL-8.0-blue)
 ![Hibernate](https://img.shields.io/badge/Hibernate-JPA-59666C)
 ![Testcontainers](https://img.shields.io/badge/Testcontainers-MySQL-1e88e5)
@@ -40,7 +40,7 @@ Every company that isn't purely event-driven still has a system of record sittin
                                                 ▼
                                    ┌─────────────────────────┐
                                    │   employee-service       │
-                                   │   (Spring Boot 3, :8080) │
+                                   │   (Spring Boot 4, :8080) │
                                    │                          │
                                    │  Controller → Service    │
                                    │  → Repository → Entity   │
@@ -167,8 +167,8 @@ employee-service/
 
 | Layer | Technology | Why |
 |---|---|---|
-| Language | Java 21 | Records for DTOs, modern language features |
-| Framework | Spring Boot 3.3.4 | Auto-configuration, embedded Tomcat, actuator |
+| Language | Java 25 | Records for DTOs, modern language features |
+| Framework | Spring Boot 4.0.6 | Auto-configuration, embedded Tomcat, actuator |
 | Persistence | Spring Data JPA + Hibernate | ORM, repository abstraction, `Specification` API |
 | Database | MySQL 8.0 | Real-world relational engine, run via Docker for local dev |
 | Connection pool | HikariCP (Spring Boot default) | Fast, production-grade pooling |
@@ -202,7 +202,7 @@ employee-service/
 | `spring.jpa.properties.hibernate.jdbc.batch_size` | `25` | Batches inserts/updates into groups of 25 round-trips instead of one-by-one, cutting DB chattiness |
 | `spring.jpa.properties.hibernate.order_inserts` / `order_updates` | `true` | Groups statements by table so the batching above is actually effective |
 | `spring.jackson.default-property-inclusion` | `non_null` | Omits null fields from JSON responses (e.g. a manager-less employee has no `manager` key rather than `"manager": null` noise) |
-| `spring.jackson.serialization.write-dates-as-timestamps` | `false` | Dates/instants serialize as ISO-8601 strings, not epoch millis — human-readable and JS-`Date`-friendly |
+| `spring.jackson.serialization.write-dates-as-timestamps` | `false` | Dates/instants serialize as ISO-8601 strings, not epoch millis — human-readable and JS-`Date`-friendly (this is also Jackson 3's own default under Spring Boot 4, so the property is now a belt-and-braces explicit setting rather than an override) |
 | `management.endpoints.web.exposure.include` | `health,info` | Minimal actuator surface exposed — just enough for the Docker healthcheck and basic ops info, no metrics/env dumps in a demo |
 | `management.endpoint.health.show-details` | `when-authorized` | Doesn't leak DB connection details to unauthenticated callers |
 | `logging.level.com.medha.employeeservice` | `${APP_LOG_LEVEL:INFO}` | App package log level overridable per environment |
@@ -216,9 +216,9 @@ employee-service/
 
 | Path | Purpose |
 |---|---|
-| `pom.xml` | Maven build: Spring Boot 3.3.4 parent, Java 21, web/data-jpa/validation/actuator starters, MySQL driver, springdoc-openapi, Lombok, JUnit 5 + Testcontainers (MySQL module) for tests |
+| `pom.xml` | Maven build: Spring Boot 4.0.6 parent, Java 25, web/data-jpa/validation/actuator starters, MySQL driver, springdoc-openapi, Lombok, JUnit 5 + Testcontainers (MySQL module) for tests |
 | `.gitignore` / `.dockerignore` | Keep build artifacts (`target/`), IDE files, and logs out of git/image layers |
-| `Dockerfile` | Multi-stage build: `maven:3.9-eclipse-temurin-21` compiles the jar, `eclipse-temurin:21-jre-alpine` runs it as a non-root `spring` user; ships a `HEALTHCHECK` that polls `/actuator/health` |
+| `Dockerfile` | Multi-stage build: `maven:3.9-eclipse-temurin-25` compiles the jar, `eclipse-temurin:25-jre-alpine` runs it as a non-root `spring` user; ships a `HEALTHCHECK` that polls `/actuator/health` |
 | `docker-compose.yml` | Wires a `mysql:8.0` container (with a `mysqladmin ping` healthcheck and a named volume `employee-mysql-data`) plus the `employee-service` app container, which `depends_on: mysql: condition: service_healthy` so the app never starts against a DB that isn't ready yet |
 | `src/main/resources/application.yml` | All runtime configuration — see section 4 |
 | `EmployeeServiceApplication.java` | `@SpringBootApplication` + `@EnableJpaAuditing` entry point; the Javadoc on this class enumerates every relationship style demonstrated in the domain model |
@@ -258,7 +258,7 @@ employee-service/
 ### Prerequisites
 
 - Docker + Docker Compose
-- (For local non-Docker dev) JDK 21 and Maven 3.9+
+- (For local non-Docker dev) JDK 25 and Maven 3.9+
 - Port `8080` and `3306` free on your machine
 
 ### Run everything with Docker Compose
@@ -471,8 +471,8 @@ All Testcontainers-backed tests share `AbstractIntegrationTest`, which starts on
 ## 9. Docker
 
 **`Dockerfile`** — two stages:
-1. **Build stage** (`maven:3.9-eclipse-temurin-21`): copies `pom.xml` first and runs `dependency:go-offline` so dependency downloads are cached in their own layer, then copies `src/` and runs `clean package -DskipTests` to produce `target/employee-service.jar`.
-2. **Runtime stage** (`eclipse-temurin:21-jre-alpine`): much smaller final image; creates and switches to a non-root `spring:spring` user before copying the jar in; exposes port 8080; declares a `HEALTHCHECK` that curls `/actuator/health` and greps for `"status":"UP"`.
+1. **Build stage** (`maven:3.9-eclipse-temurin-25`): copies `pom.xml` first and runs `dependency:go-offline` so dependency downloads are cached in their own layer, then copies `src/` and runs `clean package -DskipTests` to produce `target/employee-service.jar`.
+2. **Runtime stage** (`eclipse-temurin:25-jre-alpine`): much smaller final image; creates and switches to a non-root `spring:spring` user before copying the jar in; exposes port 8080; declares a `HEALTHCHECK` that curls `/actuator/health` and greps for `"status":"UP"`.
 
 **`docker-compose.yml`** — two services on a shared bridge network (`employee-network`):
 - **`mysql`** — `mysql:8.0` image, environment-driven root password/db name/user/password (with sane defaults), a named volume `employee-mysql-data` for persistence across restarts, and a `mysqladmin ping` healthcheck (10s interval, 10 retries, 30s start period) that gates the app's startup.
