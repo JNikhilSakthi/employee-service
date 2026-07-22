@@ -1,0 +1,59 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: employee-service
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:employee_db}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:employee_user}
+    password: ${DB_PASSWORD:employee_pass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    hikari:
+      pool-name: employee-service-pool
+      maximum-pool-size: ${DB_POOL_SIZE:10}
+      connection-timeout: 20000
+
+  jpa:
+    hibernate:
+      # 'update' keeps local/demo setup friction-free (Hibernate keeps the schema in sync
+      # with the entities). A real production service would switch this to 'validate'
+      # and manage schema changes with an external migration tool instead.
+      ddl-auto: ${JPA_DDL_AUTO:update}
+    show-sql: ${JPA_SHOW_SQL:false}
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQLDialect
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  jackson:
+    default-property-inclusion: non_null
+    serialization:
+      write-dates-as-timestamps: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    root: INFO
+    com.medha.employeeservice: ${APP_LOG_LEVEL:INFO}
+    org.hibernate.SQL: ${SQL_LOG_LEVEL:INFO}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs

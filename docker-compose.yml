@@ -1,0 +1,52 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: employee-service-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_pass}
+      MYSQL_DATABASE: ${DB_NAME:-employee_db}
+      MYSQL_USER: ${DB_USERNAME:-employee_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-employee_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - employee-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root_pass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - employee-network
+
+  employee-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: employee-service
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-employee_db}
+      DB_USERNAME: ${DB_USERNAME:-employee_user}
+      DB_PASSWORD: ${DB_PASSWORD:-employee_pass}
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update}
+      JPA_SHOW_SQL: ${JPA_SHOW_SQL:-false}
+      SERVER_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - employee-network
+
+networks:
+  employee-network:
+    driver: bridge
+
+volumes:
+  employee-mysql-data:
