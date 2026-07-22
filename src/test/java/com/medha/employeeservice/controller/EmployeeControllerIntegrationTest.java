@@ -1,6 +1,5 @@
 package com.medha.employeeservice.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medha.employeeservice.domain.Department;
 import com.medha.employeeservice.domain.EmployeeStatus;
 import com.medha.employeeservice.dto.request.EmployeeRequest;
@@ -10,10 +9,11 @@ import com.medha.employeeservice.repository.EmployeeRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -31,6 +31,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Full-stack test: real Spring context, real MySQL (Testcontainers), MockMvc drives
  * the HTTP layer exactly as a client would. Verifies the CRUD flow, uniqueness
  * constraints and error-handling contract end to end.
+ *
+ * <p>Uses Jackson 3's {@link JsonMapper} rather than the Jackson 2
+ * {@code com.fasterxml.jackson.databind.ObjectMapper} - Spring Boot 4 auto-configures a
+ * {@code JsonMapper} bean instead (Jackson 3 is the default JSON library), so a test that
+ * autowires the old {@code ObjectMapper} type would fail to find a matching bean.</p>
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -40,7 +45,7 @@ class EmployeeControllerIntegrationTest extends AbstractIntegrationTest {
     private MockMvc mockMvc;
 
     @Autowired
-    private ObjectMapper objectMapper;
+    private JsonMapper objectMapper;
 
     @Autowired
     private DepartmentRepository departmentRepository;

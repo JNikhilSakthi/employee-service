@@ -126,7 +126,7 @@ class EmployeeServiceImplTest {
         assertThatThrownBy(() -> employeeService.delete(5L))
                 .isInstanceOf(InvalidOperationException.class);
 
-        verify(employeeRepository, never()).delete(any());
+        verify(employeeRepository, never()).delete(any(Employee.class));
     }
 
     @Test
